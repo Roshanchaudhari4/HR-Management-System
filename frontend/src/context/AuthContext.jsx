@@ -1,9 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
 
   const [token, setToken] = useState(
@@ -39,10 +42,7 @@ export const AuthProvider = ({ children }) => {
       user: loginUser,
     } = response.data.data;
 
-    sessionStorage.setItem(
-      "token",
-      loginToken
-    );
+    sessionStorage.setItem("token", loginToken);
 
     sessionStorage.setItem(
       "user",
@@ -56,16 +56,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    // Remove logged-in user data
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
 
-    // Clear React authentication state
     setToken(null);
     setUser(null);
 
-    // Redirect to login page
-    window.location.href = "/login";
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   const value = {
