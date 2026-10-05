@@ -5,9 +5,20 @@ const LeaveType = require("../models/LeaveType");
 
 const getDateRange = (year, month) => {
   const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+  const endDate = new Date(
+    year,
+    month + 1,
+    0,
+    23,
+    59,
+    59,
+    999
+  );
 
-  return { startDate, endDate };
+  return {
+    startDate,
+    endDate,
+  };
 };
 
 const getEmployeeDashboard = async (req, res, next) => {
@@ -18,7 +29,10 @@ const getEmployeeDashboard = async (req, res, next) => {
     const year = now.getFullYear();
     const month = now.getMonth();
 
-    const { startDate, endDate } = getDateRange(year, month);
+    const { startDate, endDate } = getDateRange(
+      year,
+      month
+    );
 
     const todayStart = new Date(
       year,
@@ -36,31 +50,41 @@ const getEmployeeDashboard = async (req, res, next) => {
       999
     );
 
-    const [todayAttendance, monthlyAttendance, leaveRequests] =
-      await Promise.all([
-        Attendance.findOne({
-          employee: employeeId,
-          date: {
-            $gte: todayStart,
-            $lte: todayEnd,
-          },
-        }),
+    const [
+      todayAttendance,
+      monthlyAttendance,
+      leaveRequests,
+    ] = await Promise.all([
+      Attendance.findOne({
+        employee: employeeId,
+        date: {
+          $gte: todayStart,
+          $lte: todayEnd,
+        },
+      }),
 
-        Attendance.find({
-          employee: employeeId,
-          date: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-        }).sort({ date: -1 }),
+      Attendance.find({
+        employee: employeeId,
+        date: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      }).sort({
+        date: -1,
+      }),
 
-        LeaveRequest.find({
-          employee: employeeId,
+      LeaveRequest.find({
+        employee: employeeId,
+      })
+        .populate(
+          "leaveType",
+          "name yearlyLimit"
+        )
+        .sort({
+          createdAt: -1,
         })
-          .populate("leaveType", "name yearlyLimit")
-          .sort({ createdAt: -1 })
-          .limit(5),
-      ]);
+        .limit(10),
+    ]);
 
     const presentDays = monthlyAttendance.filter(
       (attendance) =>
@@ -106,11 +130,15 @@ const getEmployeeDashboard = async (req, res, next) => {
         await LeaveRequest.aggregate([
           {
             $match: {
-              employee: req.user.userId,
+              employee: employeeId,
               leaveType: leaveType._id,
               status: "Approved",
               startDate: {
-                $gte: new Date(year, 0, 1),
+                $gte: new Date(
+                  year,
+                  0,
+                  1
+                ),
                 $lte: new Date(
                   year,
                   11,
@@ -143,27 +171,72 @@ const getEmployeeDashboard = async (req, res, next) => {
         yearlyLimit: leaveType.yearlyLimit,
         usedDays,
         remainingDays:
-          leaveType.yearlyLimit - usedDays,
+          leaveType.yearlyLimit -
+          usedDays,
       });
     }
 
-    const pendingLeaves = leaveRequests.filter(
-      (leave) => leave.status === "Pending"
-    );
+    const pendingLeaves =
+      leaveRequests.filter(
+        (leave) =>
+          leave.status === "Pending"
+      );
+
+    const approvedLeaves =
+      leaveRequests.filter(
+        (leave) =>
+          leave.status === "Approved"
+      );
+
+    const rejectedLeaves =
+      leaveRequests.filter(
+        (leave) =>
+          leave.status === "Rejected"
+      );
+
+    const cancelledLeaves =
+      leaveRequests.filter(
+        (leave) =>
+          leave.status === "Cancelled"
+      );
 
     res.status(200).json({
       success: true,
-      message: "Employee dashboard data fetched successfully",
+      message:
+        "Employee dashboard data fetched successfully",
+
       data: {
         todayAttendance,
+
         attendanceSummary: {
-          monthlyAttendancePercentage: attendancePercentage,
+          monthlyAttendancePercentage:
+            attendancePercentage,
+
           presentDays,
+
           totalWorkingDays,
         },
+
+        leaveSummary: {
+          pendingLeaves:
+            pendingLeaves.length,
+
+          approvedLeaves:
+            approvedLeaves.length,
+
+          rejectedLeaves:
+            rejectedLeaves.length,
+
+          cancelledLeaves:
+            cancelledLeaves.length,
+        },
+
         leaveBalance,
+
         pendingLeaves,
-        recentLeaves: leaveRequests,
+
+        recentLeaves:
+          leaveRequests,
       },
     });
   } catch (error) {
@@ -171,26 +244,43 @@ const getEmployeeDashboard = async (req, res, next) => {
   }
 };
 
-const getManagerDashboard = async (req, res, next) => {
+const getManagerDashboard = async (
+  req,
+  res,
+  next
+) => {
   try {
     const managerId = req.user.userId;
 
-    const teamMembers = await User.find({
-      manager: managerId,
-      status: "Active",
-    }).select("_id name email designation");
+    const teamMembers =
+      await User.find({
+        manager: managerId,
+        status: "Active",
+      }).select(
+        "_id name email designation"
+      );
 
-    const employeeIds = teamMembers.map(
-      (employee) => employee._id
-    );
+    const employeeIds =
+      teamMembers.map(
+        (employee) => employee._id
+      );
 
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
 
-    const { startDate, endDate } = getDateRange(year, month);
+    const {
+      startDate,
+      endDate,
+    } = getDateRange(
+      year,
+      month
+    );
 
-    const [attendance, leaves] = await Promise.all([
+    const [
+      attendance,
+      leaves,
+    ] = await Promise.all([
       Attendance.find({
         employee: {
           $in: employeeIds,
@@ -204,7 +294,9 @@ const getManagerDashboard = async (req, res, next) => {
           "employee",
           "name email designation"
         )
-        .sort({ date: -1 }),
+        .sort({
+          date: -1,
+        }),
 
       LeaveRequest.find({
         employee: {
@@ -219,7 +311,9 @@ const getManagerDashboard = async (req, res, next) => {
           "leaveType",
           "name"
         )
-        .sort({ createdAt: -1 })
+        .sort({
+          createdAt: -1,
+        })
         .limit(20),
     ]);
 
@@ -239,45 +333,70 @@ const getManagerDashboard = async (req, res, next) => {
       999
     );
 
-    const todayAttendance = attendance.filter(
-      (record) =>
-        record.date >= todayStart &&
-        record.date <= todayEnd
-    );
+    const todayAttendance =
+      attendance.filter(
+        (record) =>
+          record.date >=
+            todayStart &&
+          record.date <=
+            todayEnd
+      );
 
-    const pendingLeaves = leaves.filter(
-      (leave) => leave.status === "Pending"
-    );
+    const pendingLeaves =
+      leaves.filter(
+        (leave) =>
+          leave.status === "Pending"
+      );
 
-    const presentToday = todayAttendance.filter(
-      (record) =>
-        record.status === "Present" ||
-        record.status === "Late"
-    ).length;
+    const presentToday =
+      todayAttendance.filter(
+        (record) =>
+          record.status ===
+            "Present" ||
+          record.status === "Late"
+      ).length;
 
-    const lateToday = todayAttendance.filter(
-      (record) => record.status === "Late"
-    ).length;
+    const lateToday =
+      todayAttendance.filter(
+        (record) =>
+          record.status ===
+          "Late"
+      ).length;
 
-    const halfDayToday = todayAttendance.filter(
-      (record) => record.status === "Half Day"
-    ).length;
+    const halfDayToday =
+      todayAttendance.filter(
+        (record) =>
+          record.status ===
+          "Half Day"
+      ).length;
 
     res.status(200).json({
       success: true,
-      message: "Manager dashboard data fetched successfully",
+      message:
+        "Manager dashboard data fetched successfully",
+
       data: {
         teamSummary: {
-          totalTeamMembers: teamMembers.length,
+          totalTeamMembers:
+            teamMembers.length,
+
           presentToday,
+
           lateToday,
+
           halfDayToday,
+
           absentToday:
-            teamMembers.length - todayAttendance.length,
+            teamMembers.length -
+            todayAttendance.length,
         },
+
         teamMembers,
+
         todayAttendance,
+
         pendingLeaves,
+
         recentLeaves: leaves,
       },
     });
@@ -286,13 +405,23 @@ const getManagerDashboard = async (req, res, next) => {
   }
 };
 
-const getAdminDashboard = async (req, res, next) => {
+const getAdminDashboard = async (
+  req,
+  res,
+  next
+) => {
   try {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
 
-    const { startDate, endDate } = getDateRange(year, month);
+    const {
+      startDate,
+      endDate,
+    } = getDateRange(
+      year,
+      month
+    );
 
     const [
       totalEmployees,
@@ -347,6 +476,7 @@ const getAdminDashboard = async (req, res, next) => {
             },
           },
         },
+
         {
           $group: {
             _id: "$leaveType",
@@ -355,6 +485,7 @@ const getAdminDashboard = async (req, res, next) => {
             },
           },
         },
+
         {
           $lookup: {
             from: "leavetypes",
@@ -363,16 +494,21 @@ const getAdminDashboard = async (req, res, next) => {
             as: "leaveType",
           },
         },
+
         {
           $unwind: {
             path: "$leaveType",
             preserveNullAndEmptyArrays: true,
           },
         },
+
         {
           $project: {
             _id: 0,
-            leaveType: "$leaveType.name",
+
+            leaveType:
+              "$leaveType.name",
+
             count: 1,
           },
         },
@@ -387,18 +523,23 @@ const getAdminDashboard = async (req, res, next) => {
             },
           },
         },
+
         {
           $group: {
             _id: "$status",
+
             count: {
               $sum: 1,
             },
           },
         },
+
         {
           $project: {
             _id: 0,
+
             status: "$_id",
+
             count: 1,
           },
         },
@@ -410,37 +551,48 @@ const getAdminDashboard = async (req, res, next) => {
             status: "Active",
           },
         },
+
         {
           $group: {
             _id: "$department",
+
             count: {
               $sum: 1,
             },
           },
         },
+
         {
           $lookup: {
             from: "departments",
+
             localField: "_id",
+
             foreignField: "_id",
+
             as: "department",
           },
         },
+
         {
           $unwind: {
             path: "$department",
+
             preserveNullAndEmptyArrays: true,
           },
         },
+
         {
           $project: {
             _id: 0,
+
             department: {
               $ifNull: [
                 "$department.name",
                 "Unassigned",
               ],
             },
+
             count: 1,
           },
         },
@@ -449,7 +601,10 @@ const getAdminDashboard = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Admin dashboard data fetched successfully",
+
+      message:
+        "Admin dashboard data fetched successfully",
+
       data: {
         employeeSummary: {
           totalEmployees,
@@ -480,23 +635,49 @@ const getAdminDashboard = async (req, res, next) => {
   }
 };
 
-const getDashboard = async (req, res, next) => {
+const getDashboard = async (
+  req,
+  res,
+  next
+) => {
   try {
-    if (req.user.role === "Employee") {
-      return getEmployeeDashboard(req, res, next);
+    if (
+      req.user.role ===
+      "Employee"
+    ) {
+      return getEmployeeDashboard(
+        req,
+        res,
+        next
+      );
     }
 
-    if (req.user.role === "Manager") {
-      return getManagerDashboard(req, res, next);
+    if (
+      req.user.role ===
+      "Manager"
+    ) {
+      return getManagerDashboard(
+        req,
+        res,
+        next
+      );
     }
 
-    if (req.user.role === "Admin") {
-      return getAdminDashboard(req, res, next);
+    if (
+      req.user.role ===
+      "Admin"
+    ) {
+      return getAdminDashboard(
+        req,
+        res,
+        next
+      );
     }
 
     return res.status(403).json({
       success: false,
-      message: "Invalid user role",
+      message:
+        "Invalid user role",
     });
   } catch (error) {
     next(error);
@@ -509,8 +690,3 @@ module.exports = {
   getManagerDashboard,
   getAdminDashboard,
 };
-
-// Employee dashboard: आजची attendance, monthly attendance %, leave balance, pending/recent leaves.
-// Manager dashboard: team members, आजची Present/Late/Half Day/Absent संख्या, pending/recent leaves.
-// Admin dashboard: employees, attendance आणि leave summary + charts साठी data.
-// getDashboard() user च्या role नुसार योग्य dashboard data return करतो.

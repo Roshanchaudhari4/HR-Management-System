@@ -23,8 +23,6 @@ const Attendance = () => {
       setLoading(true);
       setError("");
 
-      const token = localStorage.getItem("token");
-
       const params = {
         page,
         limit: 10,
@@ -42,14 +40,16 @@ const Attendance = () => {
         params.endDate = endDate;
       }
 
-      const response = await api.get("/attendance/team", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params,
-      });
+      const response = await api.get(
+        "/attendance/team",
+        {
+          params,
+        }
+      );
 
-      const records = Array.isArray(response.data?.data)
+      const records = Array.isArray(
+        response.data?.data
+      )
         ? response.data.data
         : [];
 
@@ -57,13 +57,16 @@ const Attendance = () => {
 
       setPagination({
         total:
-          response.data?.pagination?.totalRecords ?? 0,
+          response.data?.pagination
+            ?.totalRecords ?? 0,
 
         pages:
-          response.data?.pagination?.totalPages ?? 1,
+          response.data?.pagination
+            ?.totalPages ?? 1,
 
         currentPage:
-          response.data?.pagination?.currentPage ?? page,
+          response.data?.pagination
+            ?.currentPage ?? page,
       });
     } catch (err) {
       console.error(
@@ -90,7 +93,12 @@ const Attendance = () => {
 
   useEffect(() => {
     fetchAttendance();
-  }, [page, status, startDate, endDate]);
+  }, [
+    page,
+    status,
+    startDate,
+    endDate,
+  ]);
 
   const handleClearFilters = () => {
     setStatus("");
@@ -100,25 +108,37 @@ const Attendance = () => {
   };
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const formatTime = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(date).toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
   };
 
-  const getStatusClass = (attendanceStatus) => {
+  const getStatusClass = (
+    attendanceStatus
+  ) => {
     switch (attendanceStatus) {
       case "Present":
         return "bg-success";
@@ -142,7 +162,10 @@ const Attendance = () => {
       <div className="page-header">
         <div>
           <h2>Attendance</h2>
-          <p>Manage employee attendance records</p>
+
+          <p>
+            Manage employee attendance records
+          </p>
         </div>
       </div>
 
@@ -164,7 +187,9 @@ const Attendance = () => {
                 className="form-select"
                 value={status}
                 onChange={(event) => {
-                  setStatus(event.target.value);
+                  setStatus(
+                    event.target.value
+                  );
                   setPage(1);
                 }}
               >
@@ -200,7 +225,9 @@ const Attendance = () => {
                 className="form-control"
                 value={startDate}
                 onChange={(event) => {
-                  setStartDate(event.target.value);
+                  setStartDate(
+                    event.target.value
+                  );
                   setPage(1);
                 }}
               />
@@ -216,7 +243,9 @@ const Attendance = () => {
                 className="form-control"
                 value={endDate}
                 onChange={(event) => {
-                  setEndDate(event.target.value);
+                  setEndDate(
+                    event.target.value
+                  );
                   setPage(1);
                 }}
               />
@@ -226,7 +255,9 @@ const Attendance = () => {
               <button
                 type="button"
                 className="btn btn-outline-secondary w-100"
-                onClick={handleClearFilters}
+                onClick={
+                  handleClearFilters
+                }
               >
                 Clear Filters
               </button>
@@ -260,69 +291,97 @@ const Attendance = () => {
                       Loading attendance...
                     </td>
                   </tr>
-                ) : attendance.length === 0 ? (
+                ) : attendance.length ===
+                  0 ? (
                   <tr>
                     <td
                       colSpan="6"
                       className="text-center py-5 text-muted"
                     >
-                      No attendance records found.
+                      No attendance records
+                      found.
                     </td>
                   </tr>
                 ) : (
-                  attendance.map((record) => (
-                    <tr key={record._id}>
-                      <td>
-                        <strong>
-                          {record.employee?.name ||
-                            "Unknown"}
-                        </strong>
+                  attendance.map(
+                    (record) => (
+                      <tr
+                        key={record._id}
+                      >
+                        <td>
+                          <strong>
+                            {record
+                              .employee
+                              ?.name ||
+                              "Unknown"}
+                          </strong>
 
-                        {record.employee?.email && (
-                          <div className="small text-muted">
-                            {record.employee.email}
-                          </div>
-                        )}
+                          {record.employee
+                            ?.email && (
+                            <div className="small text-muted">
+                              {
+                                record
+                                  .employee
+                                  .email
+                              }
+                            </div>
+                          )}
 
-                        {record.employee?.designation && (
-                          <div className="small text-muted">
-                            {record.employee.designation}
-                          </div>
-                        )}
-                      </td>
+                          {record.employee
+                            ?.designation && (
+                            <div className="small text-muted">
+                              {
+                                record
+                                  .employee
+                                  .designation
+                              }
+                            </div>
+                          )}
+                        </td>
 
-                      <td>
-                        {formatDate(record.date)}
-                      </td>
+                        <td>
+                          {formatDate(
+                            record.date
+                          )}
+                        </td>
 
-                      <td>
-                        {formatTime(record.checkIn)}
-                      </td>
+                        <td>
+                          {formatTime(
+                            record.checkIn
+                          )}
+                        </td>
 
-                      <td>
-                        {formatTime(record.checkOut)}
-                      </td>
+                        <td>
+                          {formatTime(
+                            record.checkOut
+                          )}
+                        </td>
 
-                      <td>
-                        {record.workingHours !== undefined &&
-                        record.workingHours !== null
-                          ? `${Number(
-                              record.workingHours
-                            ).toFixed(2)} hrs`
-                          : "-"}
-                      </td>
+                        <td>
+                          {record.workingHours !==
+                            undefined &&
+                          record.workingHours !==
+                            null
+                            ? `${Number(
+                                record.workingHours
+                              ).toFixed(
+                                2
+                              )} hrs`
+                            : "-"}
+                        </td>
 
-                      <td>
-                        <span
-                          className={`badge ${getStatusClass(
-                            record.status
-                          )}`}
-                        >
-                          {record.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                        <td>
+                          <span
+                            className={`badge ${getStatusClass(
+                              record.status
+                            )}`}
+                          >
+                            {record.status}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  )
                 )}
               </tbody>
             </table>
@@ -342,7 +401,10 @@ const Attendance = () => {
                 disabled={page <= 1}
                 onClick={() =>
                   setPage((previous) =>
-                    Math.max(previous - 1, 1)
+                    Math.max(
+                      previous - 1,
+                      1
+                    )
                   )
                 }
               >
@@ -350,13 +412,17 @@ const Attendance = () => {
               </button>
 
               <span className="btn btn-sm btn-light">
-                Page {page} of {pagination.pages}
+                Page {page} of{" "}
+                {pagination.pages}
               </span>
 
               <button
                 type="button"
                 className="btn btn-sm btn-outline-secondary"
-                disabled={page >= pagination.pages}
+                disabled={
+                  page >=
+                  pagination.pages
+                }
                 onClick={() =>
                   setPage((previous) =>
                     Math.min(

@@ -20,16 +20,13 @@ const MyAttendance = () => {
     totalRecords: 0,
   });
 
-  const [todayAttendance, setTodayAttendance] = useState(null);
-
-  const getToken = () => localStorage.getItem("token");
+  const [todayAttendance, setTodayAttendance] =
+    useState(null);
 
   const fetchAttendance = async (page = 1) => {
     try {
       setLoading(true);
       setError("");
-
-      const token = getToken();
 
       const params = {
         page,
@@ -48,46 +45,66 @@ const MyAttendance = () => {
         params.endDate = filters.endDate;
       }
 
-      const response = await api.get("/attendance/history", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params,
-      });
+      const response = await api.get(
+        "/attendance/history",
+        {
+          params,
+        }
+      );
 
       const data = response.data?.data || [];
-      const paginationData = response.data?.pagination || {};
+      const paginationData =
+        response.data?.pagination || {};
 
-      setAttendance(Array.isArray(data) ? data : []);
+      setAttendance(
+        Array.isArray(data) ? data : []
+      );
 
       setPagination({
-        currentPage: paginationData.currentPage || 1,
-        totalPages: paginationData.totalPages || 1,
-        totalRecords: paginationData.totalRecords || 0,
+        currentPage:
+          paginationData.currentPage || page,
+        totalPages:
+          paginationData.totalPages || 1,
+        totalRecords:
+          paginationData.totalRecords || 0,
       });
 
       const today = new Date();
 
       const todayRecord = data.find((record) => {
-        if (!record.date) return false;
+        if (!record.date) {
+          return false;
+        }
 
         const recordDate = new Date(record.date);
 
         return (
-          recordDate.getFullYear() === today.getFullYear() &&
-          recordDate.getMonth() === today.getMonth() &&
-          recordDate.getDate() === today.getDate()
+          recordDate.getFullYear() ===
+            today.getFullYear() &&
+          recordDate.getMonth() ===
+            today.getMonth() &&
+          recordDate.getDate() ===
+            today.getDate()
         );
       });
 
-      setTodayAttendance(todayRecord || null);
+      setTodayAttendance(
+        todayRecord || null
+      );
     } catch (error) {
+      console.error(
+        "My attendance error:",
+        error.response?.data ||
+          error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Failed to load attendance."
       );
 
       setAttendance([]);
+      setTodayAttendance(null);
     } finally {
       setLoading(false);
     }
@@ -130,16 +147,9 @@ const MyAttendance = () => {
       setError("");
       setSuccess("");
 
-      const token = getToken();
-
       const response = await api.post(
         "/attendance/check-in",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        {}
       );
 
       setSuccess(
@@ -147,8 +157,16 @@ const MyAttendance = () => {
           "Check-in successful."
       );
 
-      await fetchAttendance(pagination.currentPage);
+      await fetchAttendance(
+        pagination.currentPage
+      );
     } catch (error) {
+      console.error(
+        "Check-in error:",
+        error.response?.data ||
+          error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Check-in failed."
@@ -164,16 +182,9 @@ const MyAttendance = () => {
       setError("");
       setSuccess("");
 
-      const token = getToken();
-
       const response = await api.post(
         "/attendance/check-out",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        {}
       );
 
       setSuccess(
@@ -181,8 +192,16 @@ const MyAttendance = () => {
           "Check-out successful."
       );
 
-      await fetchAttendance(pagination.currentPage);
+      await fetchAttendance(
+        pagination.currentPage
+      );
     } catch (error) {
+      console.error(
+        "Check-out error:",
+        error.response?.data ||
+          error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Check-out failed."
@@ -193,22 +212,32 @@ const MyAttendance = () => {
   };
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const formatTime = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(date).toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
   };
 
   const formatHours = (hours) => {
@@ -247,6 +276,7 @@ const MyAttendance = () => {
       <div className="page-header">
         <div>
           <h2>My Attendance</h2>
+
           <p>
             View your attendance and mark today's attendance
           </p>
@@ -287,7 +317,9 @@ const MyAttendance = () => {
                 onClick={handleCheckIn}
                 disabled={
                   actionLoading ||
-                  Boolean(todayAttendance?.checkIn)
+                  Boolean(
+                    todayAttendance?.checkIn
+                  )
                 }
               >
                 {actionLoading
@@ -302,7 +334,9 @@ const MyAttendance = () => {
                 disabled={
                   actionLoading ||
                   !todayAttendance?.checkIn ||
-                  Boolean(todayAttendance?.checkOut)
+                  Boolean(
+                    todayAttendance?.checkOut
+                  )
                 }
               >
                 {actionLoading
@@ -397,15 +431,19 @@ const MyAttendance = () => {
                 <option value="">
                   All Status
                 </option>
+
                 <option value="Present">
                   Present
                 </option>
+
                 <option value="Late">
                   Late
                 </option>
+
                 <option value="Half Day">
                   Half Day
                 </option>
+
                 <option value="Absent">
                   Absent
                 </option>
@@ -469,7 +507,8 @@ const MyAttendance = () => {
             </h5>
 
             <p className="text-muted mb-0 small">
-              Total Records: {pagination.totalRecords}
+              Total Records:{" "}
+              {pagination.totalRecords}
             </p>
           </div>
 
@@ -512,11 +551,15 @@ const MyAttendance = () => {
                       </td>
 
                       <td>
-                        {formatTime(record.checkIn)}
+                        {formatTime(
+                          record.checkIn
+                        )}
                       </td>
 
                       <td>
-                        {formatTime(record.checkOut)}
+                        {formatTime(
+                          record.checkOut
+                        )}
                       </td>
 
                       <td>

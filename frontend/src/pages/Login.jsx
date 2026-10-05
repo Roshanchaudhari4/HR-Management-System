@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,17 +35,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login", formData);
-
-      const loginData = response.data.data;
-
-      localStorage.setItem("token", loginData.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(loginData.user)
+      const response = await login(
+        formData.email,
+        formData.password
       );
 
-      const role = loginData.user.role;
+      const role = response?.data?.user?.role;
 
       if (role === "Admin") {
         navigate("/admin/dashboard");
@@ -117,7 +115,11 @@ const Login = () => {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
                   className="form-control"
                   placeholder="Enter your password"
                   value={formData.password}
@@ -129,10 +131,15 @@ const Login = () => {
                   type="button"
                   className="btn btn-outline-secondary"
                   onClick={() =>
-                    setShowPassword((previous) => !previous)
+                    setShowPassword(
+                      (previous) =>
+                        !previous
+                    )
                   }
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword
+                    ? "Hide"
+                    : "Show"}
                 </button>
               </div>
             </div>
@@ -142,7 +149,9 @@ const Login = () => {
               className="btn btn-primary w-100 py-2 fw-semibold"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Login"}
+              {loading
+                ? "Signing in..."
+                : "Login"}
             </button>
           </form>
         </div>

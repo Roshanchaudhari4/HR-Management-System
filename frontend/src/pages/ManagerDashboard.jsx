@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
 
 const ManagerDashboard = () => {
@@ -8,96 +8,134 @@ const ManagerDashboard = () => {
       presentToday: 0,
       absentToday: 0,
     },
+
     leaveSummary: {
       pendingLeaves: 0,
       approvedLeaves: 0,
       rejectedLeaves: 0,
     },
+
     recentLeaves: [],
   });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.get("/dashboard/manager");
+
+      const data = response.data?.data || {};
+
+      const recentLeaves = Array.isArray(
+        data.recentLeaves
+      )
+        ? data.recentLeaves
+        : [];
+
+      const pendingLeaves = Array.isArray(
+        data.pendingLeaves
+      )
+        ? data.pendingLeaves
+        : [];
+
+      setDashboardData({
+        teamSummary: {
+          totalTeamMembers:
+            data.teamSummary?.totalTeamMembers ?? 0,
+
+          presentToday:
+            data.teamSummary?.presentToday ?? 0,
+
+          absentToday:
+            data.teamSummary?.absentToday ?? 0,
+        },
+
+        leaveSummary: {
+          pendingLeaves: pendingLeaves.length,
+
+          approvedLeaves:
+            recentLeaves.filter(
+              (leave) =>
+                leave.status === "Approved"
+            ).length,
+
+          rejectedLeaves:
+            recentLeaves.filter(
+              (leave) =>
+                leave.status === "Rejected"
+            ).length,
+        },
+
+        recentLeaves,
+      });
+    } catch (error) {
+      console.error(
+        "Manager dashboard error:",
+        error.response?.data || error.message
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "Failed to load manager dashboard."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setLoading(true);
-        setError("");
+    fetchDashboard();
 
-        const token = localStorage.getItem("token");
-
-        const response = await api.get("/dashboard/manager", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = response.data?.data || {};
-
-        setDashboardData({
-          teamSummary: {
-            totalTeamMembers:
-              data.teamSummary?.totalTeamMembers ?? 0,
-
-            presentToday:
-              data.teamSummary?.presentToday ?? 0,
-
-            absentToday:
-              data.teamSummary?.absentToday ?? 0,
-          },
-
-          leaveSummary: {
-            pendingLeaves:
-              Array.isArray(data.pendingLeaves)
-                ? data.pendingLeaves.length
-                : 0,
-
-            approvedLeaves:
-              Array.isArray(data.recentLeaves)
-                ? data.recentLeaves.filter(
-                    (leave) => leave.status === "Approved"
-                  ).length
-                : 0,
-
-            rejectedLeaves:
-              Array.isArray(data.recentLeaves)
-                ? data.recentLeaves.filter(
-                    (leave) => leave.status === "Rejected"
-                  ).length
-                : 0,
-          },
-
-          recentLeaves: Array.isArray(data.recentLeaves)
-            ? data.recentLeaves
-            : [],
-        });
-      } catch (error) {
-        console.error(
-          "Manager dashboard error:",
-          error.response?.data || error.message
-        );
-
-        setError(
-          error.response?.data?.message ||
-            "Failed to load manager dashboard."
-        );
-      } finally {
-        setLoading(false);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchDashboard();
       }
     };
 
-    fetchDashboard();
-  }, []);
+    const handleWindowFocus = () => {
+      fetchDashboard();
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+    };
+  }, [fetchDashboard]);
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const getStatusClass = (status) => {
@@ -121,7 +159,10 @@ const ManagerDashboard = () => {
       <div className="page-header">
         <div>
           <h2>Manager Dashboard</h2>
-          <p>Manage your team and daily activities</p>
+
+          <p>
+            Manage your team and daily activities
+          </p>
         </div>
       </div>
 
@@ -139,7 +180,8 @@ const ManagerDashboard = () => {
             <h3>
               {loading
                 ? "..."
-                : dashboardData.teamSummary.totalTeamMembers}
+                : dashboardData.teamSummary
+                    .totalTeamMembers}
             </h3>
           </div>
         </div>
@@ -151,7 +193,8 @@ const ManagerDashboard = () => {
             <h3>
               {loading
                 ? "..."
-                : dashboardData.teamSummary.presentToday}
+                : dashboardData.teamSummary
+                    .presentToday}
             </h3>
           </div>
         </div>
@@ -163,7 +206,8 @@ const ManagerDashboard = () => {
             <h3>
               {loading
                 ? "..."
-                : dashboardData.teamSummary.absentToday}
+                : dashboardData.teamSummary
+                    .absentToday}
             </h3>
           </div>
         </div>
@@ -175,7 +219,8 @@ const ManagerDashboard = () => {
             <h3>
               {loading
                 ? "..."
-                : dashboardData.leaveSummary.pendingLeaves}
+                : dashboardData.leaveSummary
+                    .pendingLeaves}
             </h3>
           </div>
         </div>
@@ -195,7 +240,8 @@ const ManagerDashboard = () => {
                 <h4 className="fw-bold mt-2 mb-0">
                   {loading
                     ? "..."
-                    : dashboardData.leaveSummary.pendingLeaves}
+                    : dashboardData.leaveSummary
+                        .pendingLeaves}
                 </h4>
               </div>
             </div>
@@ -211,7 +257,8 @@ const ManagerDashboard = () => {
                 <h4 className="fw-bold mt-2 mb-0">
                   {loading
                     ? "..."
-                    : dashboardData.leaveSummary.approvedLeaves}
+                    : dashboardData.leaveSummary
+                        .approvedLeaves}
                 </h4>
               </div>
             </div>
@@ -227,7 +274,8 @@ const ManagerDashboard = () => {
                 <h4 className="fw-bold mt-2 mb-0">
                   {loading
                     ? "..."
-                    : dashboardData.leaveSummary.rejectedLeaves}
+                    : dashboardData.leaveSummary
+                        .rejectedLeaves}
                 </h4>
               </div>
             </div>
@@ -251,7 +299,10 @@ const ManagerDashboard = () => {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="px-3">Employee</th>
+                  <th className="px-3">
+                    Employee
+                  </th>
+
                   <th>Leave Type</th>
                   <th>Start Date</th>
                   <th>End Date</th>
@@ -270,7 +321,8 @@ const ManagerDashboard = () => {
                       Loading leave requests...
                     </td>
                   </tr>
-                ) : dashboardData.recentLeaves.length === 0 ? (
+                ) : dashboardData.recentLeaves
+                    .length === 0 ? (
                   <tr>
                     <td
                       colSpan="6"
@@ -280,47 +332,57 @@ const ManagerDashboard = () => {
                     </td>
                   </tr>
                 ) : (
-                  dashboardData.recentLeaves.map((leave) => (
-                    <tr key={leave._id}>
-                      <td className="px-3">
-                        <div className="fw-semibold">
-                          {leave.employee?.name || "-"}
-                        </div>
+                  dashboardData.recentLeaves.map(
+                    (leave) => (
+                      <tr key={leave._id}>
+                        <td className="px-3">
+                          <div className="fw-semibold">
+                            {leave.employee?.name ||
+                              "-"}
+                          </div>
 
-                        <small className="text-muted">
-                          {leave.employee?.email || "-"}
-                        </small>
-                      </td>
+                          <small className="text-muted">
+                            {leave.employee?.email ||
+                              "-"}
+                          </small>
+                        </td>
 
-                      <td>
-                        {leave.leaveType?.name || "-"}
-                      </td>
+                        <td>
+                          {leave.leaveType?.name ||
+                            "-"}
+                        </td>
 
-                      <td>
-                        {formatDate(leave.startDate)}
-                      </td>
+                        <td>
+                          {formatDate(
+                            leave.startDate
+                          )}
+                        </td>
 
-                      <td>
-                        {formatDate(leave.endDate)}
-                      </td>
+                        <td>
+                          {formatDate(
+                            leave.endDate
+                          )}
+                        </td>
 
-                      <td>
-                        <strong>
-                          {leave.days ?? 0}
-                        </strong>
-                      </td>
+                        <td>
+                          <strong>
+                            {leave.days ?? 0}
+                          </strong>
+                        </td>
 
-                      <td>
-                        <span
-                          className={`badge rounded-pill px-3 py-2 ${getStatusClass(
-                            leave.status
-                          )}`}
-                        >
-                          {leave.status || "Pending"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                        <td>
+                          <span
+                            className={`badge rounded-pill px-3 py-2 ${getStatusClass(
+                              leave.status
+                            )}`}
+                          >
+                            {leave.status ||
+                              "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  )
                 )}
               </tbody>
             </table>

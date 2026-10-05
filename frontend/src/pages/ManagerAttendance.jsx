@@ -24,18 +24,17 @@ const ManagerAttendance = () => {
 
   const fetchTeamMembers = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const response = await api.get(
+        "/dashboard/manager"
+      );
 
-      const response = await api.get("/dashboard/manager", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const teamMembers = response.data?.data?.teamMembers;
+      const teamMembers =
+        response.data?.data?.teamMembers;
 
       setEmployees(
-        Array.isArray(teamMembers) ? teamMembers : []
+        Array.isArray(teamMembers)
+          ? teamMembers
+          : []
       );
     } catch (error) {
       console.error(
@@ -49,8 +48,6 @@ const ManagerAttendance = () => {
     try {
       setLoading(true);
       setError("");
-
-      const token = localStorage.getItem("token");
 
       const params = {
         page: filters.page,
@@ -73,14 +70,16 @@ const ManagerAttendance = () => {
         params.endDate = filters.endDate;
       }
 
-      const response = await api.get("/attendance/team", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params,
-      });
+      const response = await api.get(
+        "/attendance/team",
+        {
+          params,
+        }
+      );
 
-      const records = Array.isArray(response.data?.data)
+      const records = Array.isArray(
+        response.data?.data
+      )
         ? response.data.data
         : [];
 
@@ -151,22 +150,32 @@ const ManagerAttendance = () => {
   };
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const formatTime = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(date).toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
   };
 
   const formatHours = (hours) => {
@@ -205,6 +214,7 @@ const ManagerAttendance = () => {
       <div className="page-header">
         <div>
           <h2>Team Attendance</h2>
+
           <p>
             View and monitor attendance of your team members
           </p>
@@ -213,7 +223,9 @@ const ManagerAttendance = () => {
         {!loading && (
           <div className="text-muted">
             Total Records:{" "}
-            <strong>{pagination.totalRecords}</strong>
+            <strong>
+              {pagination.totalRecords}
+            </strong>
           </div>
         )}
       </div>
@@ -238,7 +250,9 @@ const ManagerAttendance = () => {
                 value={filters.employee}
                 onChange={handleFilterChange}
               >
-                <option value="">All Employees</option>
+                <option value="">
+                  All Employees
+                </option>
 
                 {employees.map((employee) => (
                   <option
@@ -262,11 +276,25 @@ const ManagerAttendance = () => {
                 value={filters.status}
                 onChange={handleFilterChange}
               >
-                <option value="">All Status</option>
-                <option value="Present">Present</option>
-                <option value="Late">Late</option>
-                <option value="Half Day">Half Day</option>
-                <option value="Absent">Absent</option>
+                <option value="">
+                  All Status
+                </option>
+
+                <option value="Present">
+                  Present
+                </option>
+
+                <option value="Late">
+                  Late
+                </option>
+
+                <option value="Half Day">
+                  Half Day
+                </option>
+
+                <option value="Absent">
+                  Absent
+                </option>
               </select>
             </div>
 
@@ -317,7 +345,10 @@ const ManagerAttendance = () => {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="px-3">Employee</th>
+                  <th className="px-3">
+                    Employee
+                  </th>
+
                   <th>Date</th>
                   <th>Check In</th>
                   <th>Check Out</th>
@@ -350,11 +381,13 @@ const ManagerAttendance = () => {
                     <tr key={record._id}>
                       <td className="px-3">
                         <div className="fw-semibold">
-                          {record.employee?.name || "-"}
+                          {record.employee?.name ||
+                            "-"}
                         </div>
 
                         <small className="text-muted">
-                          {record.employee?.email || "-"}
+                          {record.employee?.email ||
+                            "-"}
                         </small>
                       </td>
 
@@ -363,15 +396,21 @@ const ManagerAttendance = () => {
                       </td>
 
                       <td>
-                        {formatTime(record.checkIn)}
+                        {formatTime(
+                          record.checkIn
+                        )}
                       </td>
 
                       <td>
-                        {formatTime(record.checkOut)}
+                        {formatTime(
+                          record.checkOut
+                        )}
                       </td>
 
                       <td>
-                        {formatHours(record.workingHours)}
+                        {formatHours(
+                          record.workingHours
+                        )}
                       </td>
 
                       <td>
@@ -390,47 +429,56 @@ const ManagerAttendance = () => {
             </table>
           </div>
 
-          {!loading && attendance.length > 0 && (
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 p-3 border-top">
-              <div className="text-muted small">
-                Page {pagination.currentPage} of{" "}
-                {pagination.totalPages}
-              </div>
+          {!loading &&
+            attendance.length > 0 && (
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 p-3 border-top">
+                <div className="text-muted small">
+                  Page {pagination.currentPage} of{" "}
+                  {pagination.totalPages}
+                </div>
 
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                  disabled={pagination.currentPage <= 1}
-                  onClick={() =>
-                    setFilters((previous) => ({
-                      ...previous,
-                      page: previous.page - 1,
-                    }))
-                  }
-                >
-                  Previous
-                </button>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    disabled={
+                      pagination.currentPage <= 1
+                    }
+                    onClick={() =>
+                      setFilters(
+                        (previous) => ({
+                          ...previous,
+                          page:
+                            previous.page - 1,
+                        })
+                      )
+                    }
+                  >
+                    Previous
+                  </button>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                  disabled={
-                    pagination.currentPage >=
-                    pagination.totalPages
-                  }
-                  onClick={() =>
-                    setFilters((previous) => ({
-                      ...previous,
-                      page: previous.page + 1,
-                    }))
-                  }
-                >
-                  Next
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    disabled={
+                      pagination.currentPage >=
+                      pagination.totalPages
+                    }
+                    onClick={() =>
+                      setFilters(
+                        (previous) => ({
+                          ...previous,
+                          page:
+                            previous.page + 1,
+                        })
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </div>

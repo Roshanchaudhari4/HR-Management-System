@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -10,9 +10,14 @@ import {
   UserCircle,
   X,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
-const Sidebar = ({ role, sidebarOpen, setSidebarOpen }) => {
-  const navigate = useNavigate();
+const Sidebar = ({
+  role,
+  sidebarOpen,
+  setSidebarOpen,
+}) => {
+  const { logout } = useAuth();
 
   const menuByRole = {
     Admin: [
@@ -83,11 +88,7 @@ const Sidebar = ({ role, sidebarOpen, setSidebarOpen }) => {
   const menuItems = menuByRole[role] || [];
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("role");
-
-    navigate("/login", { replace: true });
+    logout();
   };
 
   return (
@@ -110,7 +111,9 @@ const Sidebar = ({ role, sidebarOpen, setSidebarOpen }) => {
 
         <button
           className="sidebar-close-btn"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() =>
+            setSidebarOpen(false)
+          }
         >
           <X size={21} />
         </button>
@@ -149,7 +152,9 @@ const Sidebar = ({ role, sidebarOpen, setSidebarOpen }) => {
             <NavLink
               key={item.path}
               to={item.path}
-              onClick={() => setSidebarOpen(false)}
+              onClick={() =>
+                setSidebarOpen(false)
+              }
               className={({ isActive }) =>
                 `sidebar-link ${
                   isActive ? "active" : ""

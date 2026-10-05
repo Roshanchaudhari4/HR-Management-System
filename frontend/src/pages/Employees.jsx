@@ -15,6 +15,7 @@ const Employees = () => {
   const [status, setStatus] = useState("");
 
   const [page, setPage] = useState(1);
+
   const [pagination, setPagination] = useState({
     total: 0,
     pages: 1,
@@ -22,7 +23,8 @@ const Employees = () => {
   });
 
   const [showForm, setShowForm] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [editingEmployee, setEditingEmployee] =
+    useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -36,14 +38,6 @@ const Employees = () => {
     joiningDate: "",
     status: "Active",
   });
-
-  const token = localStorage.getItem("token");
-
-  const authConfig = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
 
   const fetchEmployees = async () => {
     try {
@@ -71,12 +65,14 @@ const Employees = () => {
         params.status = status;
       }
 
-      const response = await api.get("/employees", {
-        ...authConfig,
-        params,
-      });
+      const response = await api.get(
+        "/employees",
+        { params }
+      );
 
-      const records = Array.isArray(response.data?.data)
+      const records = Array.isArray(
+        response.data?.data
+      )
         ? response.data.data
         : [];
 
@@ -86,9 +82,11 @@ const Employees = () => {
         total:
           response.data?.pagination?.totalRecords ??
           records.length,
+
         pages:
           response.data?.pagination?.totalPages ??
           1,
+
         currentPage:
           response.data?.pagination?.currentPage ??
           page,
@@ -119,40 +117,43 @@ const Employees = () => {
   const fetchDepartments = async () => {
     try {
       const response = await api.get(
-        "/departments",
-        authConfig
+        "/departments"
       );
 
-      const data = response.data?.data || {};
+      const departmentData = Array.isArray(
+        response.data?.data
+      )
+        ? response.data.data
+        : [];
 
-      setDepartments(
-        Array.isArray(data)
-          ? data
-          : data.departments ||
-              data.results ||
-              []
-      );
+      setDepartments(departmentData);
     } catch (err) {
       console.error(
         "Department fetch error:",
         err.response?.data || err.message
       );
+
+      setDepartments([]);
     }
   };
 
   const fetchManagers = async () => {
     try {
-      const response = await api.get("/employees", {
-        ...authConfig,
-        params: {
-          role: "Manager",
-          status: "Active",
-          page: 1,
-          limit: 100,
-        },
-      });
+      const response = await api.get(
+        "/employees",
+        {
+          params: {
+            role: "Manager",
+            status: "Active",
+            page: 1,
+            limit: 100,
+          },
+        }
+      );
 
-      const data = Array.isArray(response.data?.data)
+      const data = Array.isArray(
+        response.data?.data
+      )
         ? response.data.data
         : [];
 
@@ -169,7 +170,12 @@ const Employees = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, [page, department, role, status]);
+  }, [
+    page,
+    department,
+    role,
+    status,
+  ]);
 
   useEffect(() => {
     fetchDepartments();
@@ -220,20 +226,29 @@ const Employees = () => {
       email: employee.email || "",
       phone: employee.phone || "",
       password: "",
+
       department:
         employee.department?._id ||
         employee.department ||
         "",
-      designation: employee.designation || "",
-      role: employee.role || "Employee",
+
+      designation:
+        employee.designation || "",
+
+      role:
+        employee.role || "Employee",
+
       manager:
         employee.manager?._id ||
         employee.manager ||
         "",
+
       joiningDate: employee.joiningDate
         ? employee.joiningDate.substring(0, 10)
         : "",
-      status: employee.status || "Active",
+
+      status:
+        employee.status || "Active",
     });
 
     setShowForm(true);
@@ -249,33 +264,40 @@ const Employees = () => {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        department: formData.department || undefined,
+
+        department:
+          formData.department || undefined,
+
         designation: formData.designation,
+
         role: formData.role,
+
         manager:
-          formData.role === "Employee" && formData.manager
+          formData.role === "Employee" &&
+          formData.manager
             ? formData.manager
             : undefined,
+
         joiningDate:
           formData.joiningDate || undefined,
+
         status: formData.status,
       };
 
       if (!editingEmployee) {
-        payload.password = formData.password;
+        payload.password =
+          formData.password;
       }
 
       if (editingEmployee) {
         await api.put(
           `/employees/${editingEmployee._id}`,
-          payload,
-          authConfig
+          payload
         );
       } else {
         await api.post(
           "/employees",
-          payload,
-          authConfig
+          payload
         );
       }
 
@@ -291,20 +313,23 @@ const Employees = () => {
     }
   };
 
-  const handleDeactivate = async (employeeId) => {
+  const handleDeactivate = async (
+    employeeId
+  ) => {
     const confirmed = window.confirm(
       "Are you sure you want to deactivate this employee?"
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     try {
       setError("");
 
       await api.patch(
         `/employees/${employeeId}/deactivate`,
-        {},
-        authConfig
+        {}
       );
 
       fetchEmployees();
@@ -329,7 +354,10 @@ const Employees = () => {
       <div className="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
           <h2>Employees</h2>
-          <p>Manage employees and employee information</p>
+
+          <p>
+            Manage employees and employee information
+          </p>
         </div>
 
         <button
@@ -373,7 +401,9 @@ const Employees = () => {
                 className="form-select"
                 value={department}
                 onChange={(event) => {
-                  setDepartment(event.target.value);
+                  setDepartment(
+                    event.target.value
+                  );
                   setPage(1);
                 }}
               >
@@ -405,7 +435,9 @@ const Employees = () => {
                   setPage(1);
                 }}
               >
-                <option value="">All Roles</option>
+                <option value="">
+                  All Roles
+                </option>
 
                 <option value="Employee">
                   Employee
@@ -430,11 +462,15 @@ const Employees = () => {
                 className="form-select"
                 value={status}
                 onChange={(event) => {
-                  setStatus(event.target.value);
+                  setStatus(
+                    event.target.value
+                  );
                   setPage(1);
                 }}
               >
-                <option value="">All Status</option>
+                <option value="">
+                  All Status
+                </option>
 
                 <option value="Active">
                   Active
@@ -450,7 +486,9 @@ const Employees = () => {
               <button
                 type="button"
                 className="btn btn-outline-secondary w-100"
-                onClick={handleClearFilters}
+                onClick={
+                  handleClearFilters
+                }
               >
                 Clear Filters
               </button>
@@ -497,73 +535,84 @@ const Employees = () => {
                     </td>
                   </tr>
                 ) : (
-                  employees.map((employee) => (
-                    <tr key={employee._id}>
-                      <td>
-                        <strong>
-                          {employee.name}
-                        </strong>
-                      </td>
+                  employees.map(
+                    (employee) => (
+                      <tr
+                        key={
+                          employee._id
+                        }
+                      >
+                        <td>
+                          <strong>
+                            {employee.name}
+                          </strong>
+                        </td>
 
-                      <td>
-                        {employee.email}
-                      </td>
+                        <td>
+                          {employee.email}
+                        </td>
 
-                      <td>
-                        {employee.department?.name ||
-                          "Unassigned"}
-                      </td>
+                        <td>
+                          {employee.department
+                            ?.name ||
+                            "Unassigned"}
+                        </td>
 
-                      <td>
-                        {employee.designation ||
-                          "-"}
-                      </td>
+                        <td>
+                          {employee.designation ||
+                            "-"}
+                        </td>
 
-                      <td>
-                        <span className="badge bg-primary">
-                          {employee.role}
-                        </span>
-                      </td>
+                        <td>
+                          <span className="badge bg-primary">
+                            {employee.role}
+                          </span>
+                        </td>
 
-                      <td>
-                        <span
-                          className={`badge ${
-                            employee.status === "Active"
-                              ? "bg-success"
-                              : "bg-secondary"
-                          }`}
-                        >
-                          {employee.status}
-                        </span>
-                      </td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              employee.status ===
+                              "Active"
+                                ? "bg-success"
+                                : "bg-secondary"
+                            }`}
+                          >
+                            {employee.status}
+                          </span>
+                        </td>
 
-                      <td className="text-end">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-primary me-2"
-                          onClick={() =>
-                            handleEditEmployee(employee)
-                          }
-                        >
-                          Edit
-                        </button>
-
-                        {employee.status === "Active" && (
+                        <td className="text-end">
                           <button
                             type="button"
-                            className="btn btn-sm btn-outline-danger"
+                            className="btn btn-sm btn-outline-primary me-2"
                             onClick={() =>
-                              handleDeactivate(
-                                employee._id
+                              handleEditEmployee(
+                                employee
                               )
                             }
                           >
-                            Deactivate
+                            Edit
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+
+                          {employee.status ===
+                            "Active" && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() =>
+                                handleDeactivate(
+                                  employee._id
+                                )
+                              }
+                            >
+                              Deactivate
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  )
                 )}
               </tbody>
             </table>
@@ -583,7 +632,10 @@ const Employees = () => {
                 disabled={page <= 1}
                 onClick={() =>
                   setPage((previous) =>
-                    Math.max(previous - 1, 1)
+                    Math.max(
+                      previous - 1,
+                      1
+                    )
                   )
                 }
               >
@@ -591,13 +643,17 @@ const Employees = () => {
               </button>
 
               <span className="btn btn-sm btn-light">
-                Page {page} of {pagination.pages}
+                Page {page} of{" "}
+                {pagination.pages}
               </span>
 
               <button
                 type="button"
                 className="btn btn-sm btn-outline-secondary"
-                disabled={page >= pagination.pages}
+                disabled={
+                  page >=
+                  pagination.pages
+                }
                 onClick={() =>
                   setPage((previous) =>
                     Math.min(
@@ -619,7 +675,8 @@ const Employees = () => {
           className="modal d-block"
           tabIndex="-1"
           style={{
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor:
+              "rgba(0, 0, 0, 0.5)",
           }}
         >
           <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -641,7 +698,9 @@ const Employees = () => {
                 ></button>
               </div>
 
-              <form onSubmit={handleSubmit}>
+              <form
+                onSubmit={handleSubmit}
+              >
                 <div className="modal-body">
                   <div className="row g-3">
                     <div className="col-md-6">
@@ -653,8 +712,12 @@ const Employees = () => {
                         type="text"
                         name="name"
                         className="form-control"
-                        value={formData.name}
-                        onChange={handleFormChange}
+                        value={
+                          formData.name
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                         required
                       />
                     </div>
@@ -668,8 +731,12 @@ const Employees = () => {
                         type="email"
                         name="email"
                         className="form-control"
-                        value={formData.email}
-                        onChange={handleFormChange}
+                        value={
+                          formData.email
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                         required
                       />
                     </div>
@@ -683,8 +750,12 @@ const Employees = () => {
                         type="text"
                         name="phone"
                         className="form-control"
-                        value={formData.phone}
-                        onChange={handleFormChange}
+                        value={
+                          formData.phone
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                       />
                     </div>
 
@@ -698,8 +769,12 @@ const Employees = () => {
                           type="password"
                           name="password"
                           className="form-control"
-                          value={formData.password}
-                          onChange={handleFormChange}
+                          value={
+                            formData.password
+                          }
+                          onChange={
+                            handleFormChange
+                          }
                           minLength="6"
                           required
                         />
@@ -714,25 +789,36 @@ const Employees = () => {
                       <select
                         name="department"
                         className="form-select"
-                        value={formData.department}
-                        onChange={handleFormChange}
+                        value={
+                          formData.department
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                       >
                         <option value="">
                           Select Department
                         </option>
 
-                        {departments.map((item) => (
-                          <option
-                            key={item._id}
-                            value={item._id}
-                          >
-                            {item.name}
-                          </option>
-                        ))}
+                        {departments.map(
+                          (item) => (
+                            <option
+                              key={
+                                item._id
+                              }
+                              value={
+                                item._id
+                              }
+                            >
+                              {item.name}
+                            </option>
+                          )
+                        )}
                       </select>
                     </div>
 
-                    {formData.role === "Employee" && (
+                    {formData.role ===
+                      "Employee" && (
                       <div className="col-md-6">
                         <label className="form-label">
                           Manager
@@ -741,21 +827,33 @@ const Employees = () => {
                         <select
                           name="manager"
                           className="form-select"
-                          value={formData.manager}
-                          onChange={handleFormChange}
+                          value={
+                            formData.manager
+                          }
+                          onChange={
+                            handleFormChange
+                          }
                         >
                           <option value="">
                             Select Manager
                           </option>
 
-                          {managers.map((manager) => (
-                            <option
-                              key={manager._id}
-                              value={manager._id}
-                            >
-                              {manager.name}
-                            </option>
-                          ))}
+                          {managers.map(
+                            (manager) => (
+                              <option
+                                key={
+                                  manager._id
+                                }
+                                value={
+                                  manager._id
+                                }
+                              >
+                                {
+                                  manager.name
+                                }
+                              </option>
+                            )
+                          )}
                         </select>
                       </div>
                     )}
@@ -769,8 +867,12 @@ const Employees = () => {
                         type="text"
                         name="designation"
                         className="form-control"
-                        value={formData.designation}
-                        onChange={handleFormChange}
+                        value={
+                          formData.designation
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                       />
                     </div>
 
@@ -782,8 +884,12 @@ const Employees = () => {
                       <select
                         name="role"
                         className="form-select"
-                        value={formData.role}
-                        onChange={handleFormChange}
+                        value={
+                          formData.role
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                       >
                         <option value="Employee">
                           Employee
@@ -808,8 +914,12 @@ const Employees = () => {
                         type="date"
                         name="joiningDate"
                         className="form-control"
-                        value={formData.joiningDate}
-                        onChange={handleFormChange}
+                        value={
+                          formData.joiningDate
+                        }
+                        onChange={
+                          handleFormChange
+                        }
                       />
                     </div>
 
@@ -822,8 +932,12 @@ const Employees = () => {
                         <select
                           name="status"
                           className="form-select"
-                          value={formData.status}
-                          onChange={handleFormChange}
+                          value={
+                            formData.status
+                          }
+                          onChange={
+                            handleFormChange
+                          }
                         >
                           <option value="Active">
                             Active

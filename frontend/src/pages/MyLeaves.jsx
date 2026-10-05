@@ -33,14 +33,10 @@ const MyLeaves = () => {
     reason: "",
   });
 
-  const getToken = () => localStorage.getItem("token");
-
   const fetchLeaves = async (page = 1) => {
     try {
       setLoading(true);
       setError("");
-
-      const token = getToken();
 
       const params = {
         page,
@@ -64,9 +60,6 @@ const MyLeaves = () => {
       }
 
       const response = await api.get("/leaves/my", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         params,
       });
 
@@ -78,13 +71,20 @@ const MyLeaves = () => {
 
       setPagination({
         currentPage:
-          paginationData.currentPage || 1,
+          paginationData.currentPage || page,
+
         totalPages:
           paginationData.totalPages || 1,
+
         totalRecords:
           paginationData.totalRecords || 0,
       });
     } catch (error) {
+      console.error(
+        "My leaves error:",
+        error.response?.data || error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Failed to load leave requests."
@@ -98,15 +98,8 @@ const MyLeaves = () => {
 
   const fetchLeaveTypes = async () => {
     try {
-      const token = getToken();
-
       const response = await api.get(
-        "/leave-types/active",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        "/leave-types/active"
       );
 
       const data = response.data?.data || [];
@@ -115,6 +108,11 @@ const MyLeaves = () => {
         Array.isArray(data) ? data : []
       );
     } catch (error) {
+      console.error(
+        "Leave types error:",
+        error.response?.data || error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Failed to load leave types."
@@ -205,22 +203,12 @@ const MyLeaves = () => {
         return;
       }
 
-      const token = getToken();
-
-      const response = await api.post(
-        "/leaves",
-        {
-          leaveType: formData.leaveType,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          reason: formData.reason.trim(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.post("/leaves", {
+        leaveType: formData.leaveType,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        reason: formData.reason.trim(),
+      });
 
       setSuccess(
         response.data?.message ||
@@ -232,6 +220,11 @@ const MyLeaves = () => {
 
       await fetchLeaves(1);
     } catch (error) {
+      console.error(
+        "Apply leave error:",
+        error.response?.data || error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Failed to apply leave."
@@ -254,16 +247,9 @@ const MyLeaves = () => {
       setError("");
       setSuccess("");
 
-      const token = getToken();
-
       const response = await api.patch(
         `/leaves/${leaveId}/cancel`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        {}
       );
 
       setSuccess(
@@ -275,6 +261,11 @@ const MyLeaves = () => {
         pagination.currentPage
       );
     } catch (error) {
+      console.error(
+        "Cancel leave error:",
+        error.response?.data || error.message
+      );
+
       setError(
         error.response?.data?.message ||
           "Failed to cancel leave."
@@ -283,13 +274,18 @@ const MyLeaves = () => {
   };
 
   const formatDate = (date) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const getStatusClass = (status) => {
@@ -316,6 +312,7 @@ const MyLeaves = () => {
       <div className="page-header">
         <div>
           <h2>My Leaves</h2>
+
           <p>
             Apply for leave and view your leave requests
           </p>
@@ -466,15 +463,19 @@ const MyLeaves = () => {
                 <option value="">
                   All Status
                 </option>
+
                 <option value="Pending">
                   Pending
                 </option>
+
                 <option value="Approved">
                   Approved
                 </option>
+
                 <option value="Rejected">
                   Rejected
                 </option>
+
                 <option value="Cancelled">
                   Cancelled
                 </option>
@@ -564,7 +565,8 @@ const MyLeaves = () => {
             </h5>
 
             <p className="text-muted mb-0 small">
-              Total Records: {pagination.totalRecords}
+              Total Records:{" "}
+              {pagination.totalRecords}
             </p>
           </div>
 
@@ -575,6 +577,7 @@ const MyLeaves = () => {
                   <th className="px-3">
                     Leave Type
                   </th>
+
                   <th>Start Date</th>
                   <th>End Date</th>
                   <th>Days</th>
@@ -629,7 +632,9 @@ const MyLeaves = () => {
 
                       <td>
                         <span
-                          title={leave.reason || ""}
+                          title={
+                            leave.reason || ""
+                          }
                         >
                           {leave.reason
                             ? leave.reason.length > 30
@@ -648,7 +653,7 @@ const MyLeaves = () => {
                             leave.status
                           )}`}
                         >
-                          {leave.status}
+                          {leave.status || "-"}
                         </span>
                       </td>
 
@@ -690,47 +695,48 @@ const MyLeaves = () => {
             </table>
           </div>
 
-          {!loading && leaves.length > 0 && (
-            <div className="d-flex justify-content-between align-items-center p-3 border-top">
-              <span className="text-muted small">
-                Page {pagination.currentPage} of{" "}
-                {pagination.totalPages}
-              </span>
+          {!loading &&
+            leaves.length > 0 && (
+              <div className="d-flex justify-content-between align-items-center p-3 border-top">
+                <span className="text-muted small">
+                  Page {pagination.currentPage} of{" "}
+                  {pagination.totalPages}
+                </span>
 
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary btn-sm"
-                  disabled={
-                    pagination.currentPage <= 1
-                  }
-                  onClick={() =>
-                    fetchLeaves(
-                      pagination.currentPage - 1
-                    )
-                  }
-                >
-                  Previous
-                </button>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    disabled={
+                      pagination.currentPage <= 1
+                    }
+                    onClick={() =>
+                      fetchLeaves(
+                        pagination.currentPage - 1
+                      )
+                    }
+                  >
+                    Previous
+                  </button>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary btn-sm"
-                  disabled={
-                    pagination.currentPage >=
-                    pagination.totalPages
-                  }
-                  onClick={() =>
-                    fetchLeaves(
-                      pagination.currentPage + 1
-                    )
-                  }
-                >
-                  Next
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    disabled={
+                      pagination.currentPage >=
+                      pagination.totalPages
+                    }
+                    onClick={() =>
+                      fetchLeaves(
+                        pagination.currentPage + 1
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </div>

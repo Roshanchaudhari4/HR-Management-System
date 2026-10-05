@@ -12,20 +12,25 @@ const ManagerTeam = () => {
         setLoading(true);
         setError("");
 
-        const token = localStorage.getItem("token");
+        const response = await api.get(
+          "/dashboard/manager"
+        );
 
-        const response = await api.get("/dashboard/manager", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const members = response.data?.data?.teamMembers;
+        const members =
+          response.data?.data?.teamMembers;
 
         setTeamMembers(
-          Array.isArray(members) ? members : []
+          Array.isArray(members)
+            ? members
+            : []
         );
       } catch (error) {
+        console.error(
+          "Team members error:",
+          error.response?.data ||
+            error.message
+        );
+
         setError(
           error.response?.data?.message ||
             "Failed to load team members."
@@ -45,13 +50,18 @@ const ManagerTeam = () => {
       <div className="page-header">
         <div>
           <h2>My Team</h2>
-          <p>View your assigned team members</p>
+
+          <p>
+            View your assigned team members
+          </p>
         </div>
 
         {!loading && (
           <div className="text-muted">
             Total Members:{" "}
-            <strong>{teamMembers.length}</strong>
+            <strong>
+              {teamMembers.length}
+            </strong>
           </div>
         )}
       </div>
@@ -68,7 +78,10 @@ const ManagerTeam = () => {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="px-3">Employee</th>
+                  <th className="px-3">
+                    Employee
+                  </th>
+
                   <th>Email</th>
                   <th>Designation</th>
                   <th>Status</th>
@@ -113,7 +126,8 @@ const ManagerTeam = () => {
 
                       <td>
                         <span className="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                          Active
+                          {member.status ||
+                            "Active"}
                         </span>
                       </td>
                     </tr>

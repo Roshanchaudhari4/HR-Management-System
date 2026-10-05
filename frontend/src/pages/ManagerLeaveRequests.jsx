@@ -30,8 +30,6 @@ const ManagerLeaveRequests = () => {
       setLoading(true);
       setError("");
 
-      const token = localStorage.getItem("token");
-
       const params = {
         page: filters.page,
         limit: 10,
@@ -54,9 +52,6 @@ const ManagerLeaveRequests = () => {
       }
 
       const response = await api.get("/leaves/team", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         params,
       });
 
@@ -70,8 +65,11 @@ const ManagerLeaveRequests = () => {
         currentPage:
           response.data?.pagination?.currentPage ??
           filters.page,
+
         totalPages:
-          response.data?.pagination?.totalPages ?? 1,
+          response.data?.pagination?.totalPages ??
+          1,
+
         totalRecords:
           response.data?.pagination?.totalRecords ??
           records.length,
@@ -125,7 +123,9 @@ const ManagerLeaveRequests = () => {
 
   const handleApprove = async (leave) => {
     const confirmed = window.confirm(
-      `Approve leave request for ${leave.employee?.name || "this employee"}?`
+      `Approve leave request for ${
+        leave.employee?.name || "this employee"
+      }?`
     );
 
     if (!confirmed) {
@@ -135,18 +135,12 @@ const ManagerLeaveRequests = () => {
     try {
       setActionLoading(true);
       setActionError("");
-
-      const token = localStorage.getItem("token");
+      setError("");
 
       await api.patch(
         `/leaves/${leave._id}/status`,
         {
           status: "Approved",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -154,6 +148,11 @@ const ManagerLeaveRequests = () => {
 
       await fetchLeaves();
     } catch (error) {
+      console.error(
+        "Approve leave error:",
+        error.response?.data || error.message
+      );
+
       setActionError(
         error.response?.data?.message ||
           "Failed to approve leave request."
@@ -178,19 +177,14 @@ const ManagerLeaveRequests = () => {
     try {
       setActionLoading(true);
       setActionError("");
-
-      const token = localStorage.getItem("token");
+      setError("");
 
       await api.patch(
         `/leaves/${selectedLeave._id}/status`,
         {
           status: "Rejected",
-          rejectionReason: rejectionReason.trim(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          rejectionReason:
+            rejectionReason.trim(),
         }
       );
 
@@ -199,6 +193,11 @@ const ManagerLeaveRequests = () => {
 
       await fetchLeaves();
     } catch (error) {
+      console.error(
+        "Reject leave error:",
+        error.response?.data || error.message
+      );
+
       setActionError(
         error.response?.data?.message ||
           "Failed to reject leave request."
@@ -229,11 +228,14 @@ const ManagerLeaveRequests = () => {
       return "-";
     }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(date).toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   const getStatusClass = (status) => {
@@ -260,6 +262,7 @@ const ManagerLeaveRequests = () => {
       <div className="page-header">
         <div>
           <h2>Leave Requests</h2>
+
           <p>
             Manage leave requests from your team members
           </p>
@@ -268,7 +271,9 @@ const ManagerLeaveRequests = () => {
         {!loading && (
           <div className="text-muted">
             Total Records:{" "}
-            <strong>{pagination.totalRecords}</strong>
+            <strong>
+              {pagination.totalRecords}
+            </strong>
           </div>
         )}
       </div>
@@ -293,11 +298,25 @@ const ManagerLeaveRequests = () => {
                 value={filters.status}
                 onChange={handleFilterChange}
               >
-                <option value="">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Cancelled">Cancelled</option>
+                <option value="">
+                  All Status
+                </option>
+
+                <option value="Pending">
+                  Pending
+                </option>
+
+                <option value="Approved">
+                  Approved
+                </option>
+
+                <option value="Rejected">
+                  Rejected
+                </option>
+
+                <option value="Cancelled">
+                  Cancelled
+                </option>
               </select>
             </div>
 
@@ -312,11 +331,25 @@ const ManagerLeaveRequests = () => {
                 value={filters.leaveType}
                 onChange={handleFilterChange}
               >
-                <option value="">All Leave Types</option>
-                <option value="Casual">Casual</option>
-                <option value="Sick">Sick</option>
-                <option value="Earned">Earned</option>
-                <option value="Unpaid">Unpaid</option>
+                <option value="">
+                  All Leave Types
+                </option>
+
+                <option value="Casual">
+                  Casual
+                </option>
+
+                <option value="Sick">
+                  Sick
+                </option>
+
+                <option value="Earned">
+                  Earned
+                </option>
+
+                <option value="Unpaid">
+                  Unpaid
+                </option>
               </select>
             </div>
 
@@ -415,11 +448,15 @@ const ManagerLeaveRequests = () => {
                       </td>
 
                       <td>
-                        {formatDate(leave.startDate)}
+                        {formatDate(
+                          leave.startDate
+                        )}
                       </td>
 
                       <td>
-                        {formatDate(leave.endDate)}
+                        {formatDate(
+                          leave.endDate
+                        )}
                       </td>
 
                       <td>
@@ -428,7 +465,9 @@ const ManagerLeaveRequests = () => {
 
                       <td>
                         <span
-                          title={leave.reason || ""}
+                          title={
+                            leave.reason || ""
+                          }
                         >
                           {leave.reason
                             ? leave.reason.length > 30
@@ -452,25 +491,36 @@ const ManagerLeaveRequests = () => {
                       </td>
 
                       <td>
-                        {leave.status === "Pending" ? (
+                        {leave.status ===
+                        "Pending" ? (
                           <div className="d-flex gap-2">
                             <button
                               type="button"
                               className="btn btn-sm btn-success"
-                              disabled={actionLoading}
+                              disabled={
+                                actionLoading
+                              }
                               onClick={() =>
-                                handleApprove(leave)
+                                handleApprove(
+                                  leave
+                                )
                               }
                             >
-                              Approve
+                              {actionLoading
+                                ? "..."
+                                : "Approve"}
                             </button>
 
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-danger"
-                              disabled={actionLoading}
+                              disabled={
+                                actionLoading
+                              }
                               onClick={() =>
-                                openRejectModal(leave)
+                                openRejectModal(
+                                  leave
+                                )
                               }
                             >
                               Reject
@@ -489,47 +539,58 @@ const ManagerLeaveRequests = () => {
             </table>
           </div>
 
-          {!loading && leaves.length > 0 && (
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 p-3 border-top">
-              <div className="text-muted small">
-                Page {pagination.currentPage} of{" "}
-                {pagination.totalPages}
-              </div>
+          {!loading &&
+            leaves.length > 0 && (
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 p-3 border-top">
+                <div className="text-muted small">
+                  Page{" "}
+                  {pagination.currentPage} of{" "}
+                  {pagination.totalPages}
+                </div>
 
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                  disabled={pagination.currentPage <= 1}
-                  onClick={() =>
-                    setFilters((previous) => ({
-                      ...previous,
-                      page: previous.page - 1,
-                    }))
-                  }
-                >
-                  Previous
-                </button>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    disabled={
+                      pagination.currentPage <=
+                      1
+                    }
+                    onClick={() =>
+                      setFilters(
+                        (previous) => ({
+                          ...previous,
+                          page:
+                            previous.page - 1,
+                        })
+                      )
+                    }
+                  >
+                    Previous
+                  </button>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                  disabled={
-                    pagination.currentPage >=
-                    pagination.totalPages
-                  }
-                  onClick={() =>
-                    setFilters((previous) => ({
-                      ...previous,
-                      page: previous.page + 1,
-                    }))
-                  }
-                >
-                  Next
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    disabled={
+                      pagination.currentPage >=
+                      pagination.totalPages
+                    }
+                    onClick={() =>
+                      setFilters(
+                        (previous) => ({
+                          ...previous,
+                          page:
+                            previous.page + 1,
+                        })
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
 
@@ -539,7 +600,8 @@ const ManagerLeaveRequests = () => {
           tabIndex="-1"
           role="dialog"
           style={{
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor:
+              "rgba(0, 0, 0, 0.5)",
           }}
         >
           <div className="modal-dialog modal-dialog-centered">
@@ -564,7 +626,8 @@ const ManagerLeaveRequests = () => {
                   </div>
 
                   <div className="text-muted">
-                    {selectedLeave.employee?.name || "-"}
+                    {selectedLeave.employee?.name ||
+                      "-"}
                   </div>
                 </div>
 
@@ -574,7 +637,8 @@ const ManagerLeaveRequests = () => {
                   </div>
 
                   <div className="text-muted">
-                    {selectedLeave.leaveType?.name || "-"}
+                    {selectedLeave.leaveType?.name ||
+                      "-"}
                   </div>
                 </div>
 

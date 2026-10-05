@@ -31,20 +31,7 @@ const AdminDashboard = () => {
         setLoading(true);
         setError("");
 
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          setError(
-            "Authentication token not found. Please login again."
-          );
-          return;
-        }
-
-        const response = await api.get("/dashboard/admin", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await api.get("/dashboard/admin");
 
         const data = response.data?.data || {};
 
