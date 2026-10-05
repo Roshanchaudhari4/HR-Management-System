@@ -15,6 +15,54 @@ import MyAttendance from "./pages/MyAttendance";
 import MyLeaves from "./pages/MyLeaves";
 import MainLayout from "./layouts/MainLayout";
 
+/* =========================================================
+   PROTECTED ROUTE
+   ========================================================= */
+
+const ProtectedRoute = ({ children, allowedRole }) => {
+  const token = sessionStorage.getItem("token");
+  const storedUser = sessionStorage.getItem("user");
+
+  /* If user is not logged in */
+  if (!token || !storedUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  let user;
+
+  try {
+    user = JSON.parse(storedUser);
+  } catch {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+
+    return <Navigate to="/login" replace />;
+  }
+
+  /* If role does not match */
+  if (allowedRole && user?.role !== allowedRole) {
+    if (user?.role === "Admin") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    if (user?.role === "Manager") {
+      return <Navigate to="/manager/dashboard" replace />;
+    }
+
+    if (user?.role === "Employee") {
+      return <Navigate to="/employee/dashboard" replace />;
+    }
+
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+/* =========================================================
+   ADMIN DASHBOARD
+   ========================================================= */
+
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     totalEmployees: 0,
@@ -128,30 +176,47 @@ const AdminDashboard = () => {
   );
 };
 
+/* =========================================================
+   ADMIN ATTENDANCE
+   ========================================================= */
+
 const AttendanceRoute = () => {
   console.log("ADMIN ATTENDANCE ROUTE LOADED");
 
   return <Attendance />;
 };
 
+/* =========================================================
+   APP
+   ========================================================= */
+
 const App = () => {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={<Navigate to="/login" replace />}
-      />
+
+      {/* ================= LOGIN ================= */}
 
       <Route
         path="/login"
         element={<Login />}
       />
 
+      {/* ================= HOME ================= */}
+
+      <Route
+        path="/"
+        element={<Navigate to="/login" replace />}
+      />
+
       {/* ================= ADMIN ================= */}
 
       <Route
         path="/admin"
-        element={<MainLayout role="Admin" />}
+        element={
+          <ProtectedRoute allowedRole="Admin">
+            <MainLayout role="Admin" />
+          </ProtectedRoute>
+        }
       >
         <Route
           path="dashboard"
@@ -178,7 +243,11 @@ const App = () => {
 
       <Route
         path="/manager"
-        element={<MainLayout role="Manager" />}
+        element={
+          <ProtectedRoute allowedRole="Manager">
+            <MainLayout role="Manager" />
+          </ProtectedRoute>
+        }
       >
         <Route
           path="dashboard"
@@ -205,7 +274,11 @@ const App = () => {
 
       <Route
         path="/employee"
-        element={<MainLayout role="Employee" />}
+        element={
+          <ProtectedRoute allowedRole="Employee">
+            <MainLayout role="Employee" />
+          </ProtectedRoute>
+        }
       >
         <Route
           path="dashboard"
@@ -233,6 +306,7 @@ const App = () => {
           </div>
         }
       />
+
     </Routes>
   );
 };

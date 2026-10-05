@@ -5,9 +5,11 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+
   const [token, setToken] = useState(
     sessionStorage.getItem("token")
   );
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,6 +20,8 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
       } catch {
         sessionStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        setToken(null);
       }
     }
 
@@ -30,10 +34,16 @@ export const AuthProvider = ({ children }) => {
       password,
     });
 
-    const { token: loginToken, user: loginUser } =
-      response.data.data;
+    const {
+      token: loginToken,
+      user: loginUser,
+    } = response.data.data;
 
-    sessionStorage.setItem("token", loginToken);
+    sessionStorage.setItem(
+      "token",
+      loginToken
+    );
+
     sessionStorage.setItem(
       "user",
       JSON.stringify(loginUser)
@@ -46,11 +56,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Remove logged-in user data
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
 
+    // Clear React authentication state
     setToken(null);
     setUser(null);
+
+    // Redirect to login page
+    window.location.href = "/login";
   };
 
   const value = {
